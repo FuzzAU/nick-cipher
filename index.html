@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caesar Code Decoder</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.4; }
+    .card { max-width: 720px; margin: 0 auto; padding: 18px; border: 1px solid rgba(127,127,127,.35); border-radius: 12px; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    label { display: block; font-weight: 600; margin: 14px 0 6px; }
+    input, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(127,127,127,.45);
+      background: transparent;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button { cursor: pointer; font-weight: 700; margin-top: 14px; }
+    .hint { font-size: 13px; opacity: .8; margin-top: 8px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Decode the Secret Code</h1>
+
+    <label for="cipherText">Encrypted text</label>
+    <input id="cipherText" class="mono" value="B1AR5DY26W5U6UGJ" autocomplete="off" spellcheck="false" />
+
+    <label for="key">Rotation key (digits)</label>
+    <input id="key" class="mono" value="3025068001070983" autocomplete="off" spellcheck="false" />
+
+    <div class="row">
+      <button id="decodeBtn">Decode</button>
+      <button id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <label for="plainText">Decoded result</label>
+    <textarea id="plainText" class="mono" readonly></textarea>
+
+    <div class="hint">
+      Letters shift forward by the key digit at the same position (wraps A→Z), numbers stay the same.
+    </div>
+  </div>
+
+  <script>
+    const A = "A".charCodeAt(0);
+    const Z = "Z".charCodeAt(0);
+    const a = "a".charCodeAt(0);
+    const z = "z".charCodeAt(0);
+
+    function isDigit(ch) { return ch >= "0" && ch <= "9"; }
+
+    function shiftLetter(code, shift, base) {
+      const offset = code - base;
+      return String.fromCharCode(base + ((offset + shift) % 26));
+    }
+
+    function decode(cipherText, keyDigits) {
+      if (!keyDigits || !/^\d+$/.test(keyDigits)) {
+        throw new Error("Key must be digits only.");
+      }
+
+      let out = "";
+      for (let i = 0; i < cipherText.length; i++) {
+        const ch = cipherText[i];
+        const shift = Number(keyDigits[i % keyDigits.length]);
+
+        const code = ch.charCodeAt(0);
+
+        // Uppercase
+        if (code >= A && code <= Z) {
+          out += shiftLetter(code, shift, A);
+          continue;
+        }
+        // Lowercase (optional support)
+        if (code >= a && code <= z) {
+          out += shiftLetter(code, shift, a);
+          continue;
+        }
+        // Digits and everything else stay as-is
+        out += ch;
+      }
+      return out;
+    }
+
+    const cipherTextEl = document.getElementById("cipherText");
+    const keyEl = document.getElementById("key");
+    const plainTextEl = document.getElementById("plainText");
+    const decodeBtn = document.getElementById("decodeBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function runDecode() {
+      try {
+        const result = decode(cipherTextEl.value.trim(), keyEl.value.trim());
+        plainTextEl.value = result;
+      } catch (e) {
+        plainTextEl.value = "Error: " + e.message;
+      }
+    }
+
+    decodeBtn.addEventListener("click", runDecode);
+    resetBtn.addEventListener("click", () => {
+      cipherTextEl.value = "B1AR5DY26W5U6UGJ";
+      keyEl.value = "3025068001070983";
+      plainTextEl.value = "";
+      cipherTextEl.focus();
+    });
+
+    // Auto-decode once on load (so you can confirm it works), then comment this out if you want.
+    runDecode();
+  </script>
+</body>
+</html>
