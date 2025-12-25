@@ -13,15 +13,8 @@
   <style>
     :root { color-scheme: light dark; }
     html, body { height: 100%; }
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: Canvas;
-      color: CanvasText;
-    }
+    body { margin: 0; background: Canvas; color: CanvasText; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
 
-    /* Full-screen friendly layout */
     .wrap {
       min-height: 100%;
       display: grid;
@@ -39,12 +32,7 @@
     }
 
     h1 { margin: 0 0 10px; font-size: 22px; }
-    .desc {
-      margin: 0 0 14px;
-      font-size: 15px;
-      opacity: .9;
-      line-height: 1.35;
-    }
+    .desc { margin: 0 0 14px; font-size: 15px; opacity: .92; line-height: 1.35; }
 
     .label { font-weight: 900; margin: 14px 0 8px; }
 
@@ -70,31 +58,29 @@
       background: rgba(60,200,120,.10);
     }
 
-    .dialBox {
-      margin-top: 18px;
-      padding: 18px;
+    .panel { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; margin-top: 16px; }
+    @media (max-width: 860px) { .panel { grid-template-columns: 1fr; } }
+
+    .box {
+      padding: 16px;
       border: 1px solid rgba(127,127,127,.35);
       border-radius: 16px;
-    }
-
-    .dialHeader {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 10px;
-      font-weight: 950;
+      background: rgba(127,127,127,.04);
     }
 
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
-    .bigRow {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
+    .topStats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-weight: 950;
     }
-    .bigRow .pill {
+
+    .pill {
       display: inline-block;
       padding: 8px 12px;
       border-radius: 999px;
@@ -106,15 +92,16 @@
 
     input[type="range"] { width: 100%; }
 
-    .selected {
+    .selectedRow {
+      margin-top: 10px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
       gap: 12px;
-      margin-top: 10px;
       font-size: 18px;
-      font-weight: 900;
+      font-weight: 950;
     }
+    .selectedRow .big { font-size: 22px; }
 
     .btnRow {
       display: grid;
@@ -158,7 +145,22 @@
     .msg.ok { border-color: rgba(60,200,120,.6); background: rgba(60,200,120,.10); }
     .msg.bad { border-color: rgba(255,90,90,.6); background: rgba(255,90,90,.10); }
 
-    /* Confetti canvas sits on top when needed */
+    /* Alphabet slider/mapping */
+    .map {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 16px;
+      line-height: 1.55;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(127,127,127,.25);
+      background: rgba(127,127,127,.06);
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .mapTitle { font-weight: 950; margin-bottom: 8px; opacity: .9; }
+    .map .hintLine { opacity: .85; font-size: 13px; }
+
+    /* Confetti */
     #confetti {
       position: fixed;
       inset: 0;
@@ -175,9 +177,9 @@
   <div class="card">
     <h1>Decode the Nintendo Store Code 🎮</h1>
     <p class="desc">
-      Start at the highlighted character. Look at the highlighted key digit underneath it.
-      For letters: move forward in the alphabet by that many steps, then use the dial to pick the decoded letter and press <b>Add</b>.
-      For numbers: just press <b>Add</b>.
+      Work left to right. For each letter, use the highlighted key digit as the <b>rotation number</b>.
+      Slide the dial until the alphabet mapping looks right, then press <b>Add</b>.
+      Numbers don’t change—just press <b>Add</b>.
     </p>
 
     <div class="label">Encrypted text</div>
@@ -186,35 +188,42 @@
     <div class="label">Rotation key</div>
     <div class="cipherline" id="keyLine"></div>
 
-    <div class="dialBox">
-      <div class="dialHeader">
-        <div>Dial</div>
-        <div class="mono">Step: <span id="stepNow">1</span>/<span id="stepTotal">16</span></div>
+    <div class="panel">
+      <!-- Left: sliding alphabet visualization -->
+      <div class="box">
+        <div class="mapTitle">Alphabet slider</div>
+        <div class="map" id="alphaMap"></div>
+        <div class="hintLine map" style="margin-top:10px;">
+Tip: if cipher is B and rotation is 3, B becomes E (B→C→D→E).
+        </div>
       </div>
 
-      <div class="bigRow">
-        <div class="pill mono">Cipher: <span id="cipherNow">?</span> &nbsp; | &nbsp; Key: <span id="keyNow">?</span></div>
+      <!-- Right: dial + controls -->
+      <div class="box">
+        <div class="topStats">
+          <span class="pill mono">Step <span id="stepNow">1</span>/<span id="stepTotal">16</span></span>
+          <span class="pill mono">Cipher: <span id="cipherNow">?</span></span>
+          <span class="pill mono">Key digit: <span id="keyNow">?</span></span>
+          <span class="pill mono">Rotation: <span id="rotNow">0</span></span>
+        </div>
+
+        <!-- Dial is the ROTATION amount 0..25 -->
+        <input id="dial" type="range" min="0" max="25" step="1" value="0" />
+
+        <div class="selectedRow">
+          <div>Preview:</div>
+          <div class="mono big"><span id="previewChar">?</span></div>
+        </div>
+
+        <div class="btnRow">
+          <button id="addBtn">Add</button>
+          <button id="backBtn">Back</button>
+          <button id="startOverBtn">Start over</button>
+        </div>
+
+        <div class="answer" id="answerBox"></div>
+        <div class="msg" id="msgBox"></div>
       </div>
-
-      <!-- IMPORTANT FIX:
-           The dial now selects the *decoded letter* (A–Z), not a “rotation number”.
-           This matches how kids naturally use a dial: “I’m choosing the letter I think it becomes.”
-      -->
-      <input id="dial" type="range" min="0" max="25" step="1" value="0" />
-
-      <div class="selected">
-        <div>Selected:</div>
-        <div class="mono" style="font-size: 22px;"><span id="selectedLetter">A</span></div>
-      </div>
-
-      <div class="btnRow">
-        <button id="addBtn">Add</button>
-        <button id="backBtn">Back</button>
-        <button id="startOverBtn">Start over</button>
-      </div>
-
-      <div class="answer" id="answerBox"></div>
-      <div class="msg" id="msgBox"></div>
     </div>
   </div>
 </div>
@@ -226,12 +235,16 @@
   const TARGET = "E1CW5JG26X5B6DOM";
 
   const ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const A = "A".charCodeAt(0);
 
   const cipherLine = document.getElementById("cipherLine");
   const keyLine = document.getElementById("keyLine");
 
+  const alphaMap = document.getElementById("alphaMap");
+
   const dial = document.getElementById("dial");
-  const selectedLetter = document.getElementById("selectedLetter");
+  const rotNow = document.getElementById("rotNow");
+  const previewChar = document.getElementById("previewChar");
 
   const addBtn = document.getElementById("addBtn");
   const backBtn = document.getElementById("backBtn");
@@ -260,7 +273,6 @@
     cipherLine.appendChild(s);
     cipherSpans.push(s);
   }
-
   for (let i = 0; i < KEY.length; i++) {
     const s = mkSpan(KEY[i]);
     keyLine.appendChild(s);
@@ -277,14 +289,43 @@
   function isDigit(ch) {
     return ch >= "0" && ch <= "9";
   }
+  function shiftForward(ch, shift) {
+    return String.fromCharCode(A + ((ch.charCodeAt(0) - A + shift) % 26));
+  }
 
   function setMsg(text, cls) {
     msgBox.textContent = text || "";
     msgBox.className = "msg" + (cls ? " " + cls : "");
   }
 
-  function updateSelected() {
-    selectedLetter.textContent = ALPH[Number(dial.value)] || "A";
+  function renderAlphaMap(shift, cipherCh) {
+    const base = ALPH;
+    const rotated = base.slice(shift) + base.slice(0, shift);
+
+    // Marker: show where cipher letter is in the base alphabet
+    let marker = "";
+    if (isUpper(cipherCh)) {
+      const idx = cipherCh.charCodeAt(0) - A;
+      marker = " ".repeat(idx) + "▲";
+    }
+
+    alphaMap.textContent =
+      `Normal: ${base}\n` +
+      `Shift : ${rotated}\n` +
+      (marker ? `        ${marker}  (cipher letter position)\n` : "");
+  }
+
+  function updatePreview() {
+    const c = CIPHER[pos] ?? "";
+    if (!c) { previewChar.textContent = ""; return; }
+
+    const rot = Number(dial.value);
+    if (isDigit(c)) previewChar.textContent = c;
+    else if (isUpper(c)) previewChar.textContent = shiftForward(c, rot);
+    else previewChar.textContent = c;
+
+    rotNow.textContent = String(rot);
+    renderAlphaMap(rot, c);
   }
 
   function updateUI() {
@@ -304,16 +345,14 @@
     cipherNow.textContent = done ? "✓" : c;
     keyNow.textContent = done ? "✓" : k;
 
-    // Dial rules:
-    // - for digits: disable dial (they don't change)
-    // - for letters: dial selects a letter (A–Z)
+    // For digits, dial is disabled (rotation irrelevant)
     dial.disabled = done || isDigit(c);
 
     addBtn.disabled = done;
     backBtn.disabled = answer.length === 0;
 
     answerBox.textContent = answer.join("");
-    updateSelected();
+    updatePreview();
   }
 
   function addCurrent() {
@@ -323,18 +362,16 @@
     const expected = TARGET[pos];
 
     let picked;
-
     if (isDigit(c)) {
-      picked = c; // numbers pass through
+      picked = c;
     } else if (isUpper(c)) {
-      // FIXED: dial selects the letter Nick thinks it becomes
-      picked = ALPH[Number(dial.value)];
+      picked = shiftForward(c, Number(dial.value));
     } else {
       picked = c;
     }
 
     if (picked !== expected) {
-      setMsg("Not quite — try another letter on the dial.", "bad");
+      setMsg("Not quite — try a different rotation number.", "bad");
       return;
     }
 
@@ -368,12 +405,12 @@
     updateUI();
   }
 
-  dial.addEventListener("input", () => { setMsg("", ""); updateSelected(); });
+  dial.addEventListener("input", () => { setMsg("", ""); updatePreview(); });
   addBtn.addEventListener("click", addCurrent);
   backBtn.addEventListener("click", back);
   startOverBtn.addEventListener("click", startOver);
 
-  // ---------- Confetti ----------
+  // -------- Confetti --------
   const canvas = document.getElementById("confetti");
   const ctx = canvas.getContext("2d");
 
@@ -391,9 +428,9 @@
     resizeCanvas();
     canvas.style.display = "block";
 
-    const pieces = [];
     const W = window.innerWidth, H = window.innerHeight;
-    const count = Math.min(220, Math.floor(W / 5));
+    const pieces = [];
+    const count = Math.min(240, Math.floor(W / 5));
 
     for (let i = 0; i < count; i++) {
       pieces.push({
@@ -401,10 +438,10 @@
         y: -20 - Math.random() * H * 0.2,
         vx: (Math.random() - 0.5) * 3,
         vy: 2 + Math.random() * 5,
-        size: 4 + Math.random() * 6,
+        size: 4 + Math.random() * 7,
         rot: Math.random() * Math.PI,
         vr: (Math.random() - 0.5) * 0.2,
-        life: 140 + Math.random() * 90
+        life: 150 + Math.random() * 90
       });
     }
 
@@ -417,22 +454,18 @@
         p.x += p.vx;
         p.y += p.vy;
         p.rot += p.vr;
-        p.vy += 0.02; // gentle gravity
+        p.vy += 0.02;
         p.life -= 1;
 
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
-
-        // No fixed colors requested; use random per draw
         ctx.fillStyle = `hsl(${Math.floor((p.x + t) % 360)}, 90%, 60%)`;
         ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-
         ctx.restore();
       }
 
-      // stop after ~2.5 seconds
-      if (t < 160 && pieces.some(p => p.life > 0 && p.y < H + 40)) {
+      if (t < 170 && pieces.some(p => p.life > 0 && p.y < H + 40)) {
         requestAnimationFrame(frame);
       } else {
         canvas.style.display = "none";
