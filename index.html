@@ -3,118 +3,359 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Caesar Code Decoder</title>
+  <title>Nick’s Caesar Dial Decoder</title>
   <style>
     :root { color-scheme: light dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; line-height: 1.4; }
-    .card { max-width: 720px; margin: 0 auto; padding: 18px; border: 1px solid rgba(127,127,127,.35); border-radius: 12px; }
-    h1 { font-size: 20px; margin: 0 0 12px; }
-    label { display: block; font-weight: 600; margin: 14px 0 6px; }
-    input, textarea, button {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 16px;
-      padding: 10px 12px;
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    .card { max-width: 860px; margin: 0 auto; padding: 20px; border: 1px solid rgba(127,127,127,.35); border-radius: 14px; }
+    h1 { margin: 0 0 14px; font-size: 22px; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .label { font-weight: 800; margin-bottom: 6px; }
+    .locked {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 22px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(127,127,127,.10);
+      border: 1px solid rgba(127,127,127,.35);
+      letter-spacing: 1px;
+      user-select: none;
+    }
+    .cipherline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ch {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 22px;
+      padding: 6px 8px;
       border-radius: 10px;
+      border: 1px solid rgba(127,127,127,.25);
+      background: rgba(127,127,127,.06);
+      user-select: none;
+    }
+    .ch.active {
+      border-color: rgba(80,140,255,.9);
+      box-shadow: 0 0 0 2px rgba(80,140,255,.25);
+      background: rgba(80,140,255,.10);
+    }
+
+    .panel { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
+    @media (max-width: 780px) { .panel { grid-template-columns: 1fr; } }
+
+    .big { font-size: 18px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .work {
+      padding: 14px;
+      border: 1px solid rgba(127,127,127,.35);
+      border-radius: 14px;
+      background: rgba(127,127,127,.06);
+    }
+    .work .kv { display: grid; grid-template-columns: 140px 1fr; gap: 8px 10px; align-items: center; }
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: rgba(127,127,127,.08);
+      font-weight: 800;
+    }
+
+    .dialBox {
+      padding: 14px;
+      border: 1px solid rgba(127,127,127,.35);
+      border-radius: 14px;
+    }
+    .dialTop { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+    input[type="range"] { width: 100%; }
+    .btnRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .btnRow3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+    button {
+      cursor: pointer;
+      padding: 12px 12px;
+      border-radius: 12px;
       border: 1px solid rgba(127,127,127,.45);
       background: transparent;
+      font-weight: 900;
+      font-size: 16px;
     }
-    textarea { min-height: 72px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    button { cursor: pointer; font-weight: 700; margin-top: 14px; }
-    .hint { font-size: 13px; opacity: .8; margin-top: 8px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .alph {
+      margin-top: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: auto;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.25);
+      background: rgba(127,127,127,.06);
+    }
+    .marker { font-weight: 900; }
+    .answer {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 26px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(127,127,127,.35);
+      background: rgba(127,127,127,.06);
+      letter-spacing: 1px;
+      min-height: 44px;
+    }
+    .hint { opacity: .8; font-size: 13px; margin-top: 8px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Decode the Secret Code</h1>
-
-    <label for="cipherText">Encrypted text</label>
-    <input id="cipherText" class="mono" value="B1AR5DY26W5U6UGJ" autocomplete="off" spellcheck="false" />
-
-    <label for="key">Rotation key (digits)</label>
-    <input id="key" class="mono" value="3025068001070983" autocomplete="off" spellcheck="false" />
+    <h1>Decode the Nintendo Store Code 🎮</h1>
 
     <div class="row">
-      <button id="decodeBtn">Decode</button>
-      <button id="resetBtn" type="button">Reset</button>
-    </div>
+      <div>
+        <div class="label">Encrypted text (locked)</div>
+        <div class="locked mono" id="lockedCipher"></div>
+      </div>
 
-    <label for="plainText">Decoded result</label>
-    <textarea id="plainText" class="mono" readonly></textarea>
+      <div>
+        <div class="label">Rotation key (locked)</div>
+        <div class="locked mono" id="lockedKey"></div>
+      </div>
 
-    <div class="hint">
-      Letters shift forward by the key digit at the same position (wraps A→Z), numbers stay the same.
+      <div>
+        <div class="label">Work through it one character at a time</div>
+        <div class="cipherline" id="cipherLine"></div>
+      </div>
+
+      <div class="panel">
+        <div class="work">
+          <div class="kv big">
+            <div><span class="pill">Step</span></div>
+            <div><span id="posText" class="mono"></span></div>
+
+            <div><span class="pill">Cipher</span></div>
+            <div><span id="cipherChar" class="mono"></span></div>
+
+            <div><span class="pill">Key digit</span></div>
+            <div><span id="keyDigit" class="mono"></span></div>
+
+            <div><span class="pill">Current rotation</span></div>
+            <div><span id="rotValue" class="mono"></span></div>
+
+            <div><span class="pill">Your decoded char</span></div>
+            <div><span id="preview" class="mono"></span></div>
+          </div>
+
+          <div class="alph" id="alphaMap"></div>
+
+          <div class="hint">
+            Use the dial to “rotate” the alphabet. When you think it’s right, press <b>Add this character</b>.
+            (Numbers don’t change—just add them.)
+          </div>
+        </div>
+
+        <div class="dialBox">
+          <div class="dialTop">
+            <div class="label" style="margin:0;">Dial</div>
+            <div class="mono"><span class="pill">0–25</span></div>
+          </div>
+
+          <input id="dial" type="range" min="0" max="25" step="1" value="0" />
+
+          <div class="btnRow">
+            <button id="rotatePlus">Rotate + key digit</button>
+            <button id="rotateMinus">Rotate − key digit</button>
+          </div>
+
+          <div class="btnRow3">
+            <button id="addBtn">Add this character</button>
+            <button id="backBtn">Back</button>
+            <button id="startOverBtn">Start over</button>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div class="label">Decoded answer</div>
+            <div class="answer" id="answerBox"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script>
-    const A = "A".charCodeAt(0);
-    const Z = "Z".charCodeAt(0);
-    const a = "a".charCodeAt(0);
-    const z = "z".charCodeAt(0);
+<script>
+(() => {
+  const CIPHER = "B1AR5DY26W5U6UGJ";
+  const KEY    = "3025068001070983";
 
-    function isDigit(ch) { return ch >= "0" && ch <= "9"; }
+  const A = "A".charCodeAt(0);
+  const Z = "Z".charCodeAt(0);
 
-    function shiftLetter(code, shift, base) {
-      const offset = code - base;
-      return String.fromCharCode(base + ((offset + shift) % 26));
+  const lockedCipher = document.getElementById("lockedCipher");
+  const lockedKey = document.getElementById("lockedKey");
+  const cipherLine = document.getElementById("cipherLine");
+
+  const posText = document.getElementById("posText");
+  const cipherChar = document.getElementById("cipherChar");
+  const keyDigitEl = document.getElementById("keyDigit");
+  const rotValue = document.getElementById("rotValue");
+  const preview = document.getElementById("preview");
+  const alphaMap = document.getElementById("alphaMap");
+
+  const dial = document.getElementById("dial");
+  const rotatePlus = document.getElementById("rotatePlus");
+  const rotateMinus = document.getElementById("rotateMinus");
+  const addBtn = document.getElementById("addBtn");
+  const backBtn = document.getElementById("backBtn");
+  const startOverBtn = document.getElementById("startOverBtn");
+  const answerBox = document.getElementById("answerBox");
+
+  lockedCipher.textContent = CIPHER;
+  lockedKey.textContent = KEY;
+
+  // Build clickable-ish display of the cipher characters (highlight current)
+  const chSpans = [];
+  for (let i = 0; i < CIPHER.length; i++) {
+    const s = document.createElement("span");
+    s.className = "ch";
+    s.textContent = CIPHER[i];
+    cipherLine.appendChild(s);
+    chSpans.push(s);
+  }
+
+  let pos = 0;
+  let answer = [];
+
+  function isUpperAlpha(ch) {
+    const c = ch.charCodeAt(0);
+    return c >= A && c <= Z;
+  }
+  function isDigit(ch) {
+    return ch >= "0" && ch <= "9";
+  }
+  function shiftForward(ch, shift) {
+    const c = ch.charCodeAt(0);
+    return String.fromCharCode(A + ((c - A + shift) % 26));
+  }
+
+  // This shows a mapping of alphabet → rotated alphabet, and marks where the cipher letter sits.
+  function renderAlphaMap(shift, cipherCh) {
+    const base = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const rotated = base.slice(shift) + base.slice(0, shift);
+
+    // We’re using "shift forward" decoding (same as your earlier requirement).
+    // That means cipher letter maps to rotated letter at the same index.
+    // Index is position of cipher letter in base alphabet.
+    let markerLine = "";
+    if (isUpperAlpha(cipherCh)) {
+      const idx = cipherCh.charCodeAt(0) - A;
+      markerLine = " ".repeat(idx) + "▲";
     }
 
-    function decode(cipherText, keyDigits) {
-      if (!keyDigits || !/^\d+$/.test(keyDigits)) {
-        throw new Error("Key must be digits only.");
-      }
+    alphaMap.textContent =
+      `Normal:  ${base}\n` +
+      `Rotate:  ${rotated}\n` +
+      (markerLine ? `         ${markerLine}  (cipher letter position)\n` : "");
+  }
 
-      let out = "";
-      for (let i = 0; i < cipherText.length; i++) {
-        const ch = cipherText[i];
-        const shift = Number(keyDigits[i % keyDigits.length]);
+  function updateUI() {
+    // Highlight current position
+    chSpans.forEach((s, i) => s.classList.toggle("active", i === pos));
 
-        const code = ch.charCodeAt(0);
+    posText.textContent = `${pos + 1} / ${CIPHER.length}`;
 
-        // Uppercase
-        if (code >= A && code <= Z) {
-          out += shiftLetter(code, shift, A);
-          continue;
-        }
-        // Lowercase (optional support)
-        if (code >= a && code <= z) {
-          out += shiftLetter(code, shift, a);
-          continue;
-        }
-        // Digits and everything else stay as-is
-        out += ch;
-      }
-      return out;
+    const c = CIPHER[pos] ?? "";
+    const kDigit = Number(KEY[pos] ?? "0");
+    const r = Number(dial.value);
+
+    cipherChar.textContent = c ? `"${c}"` : "(done)";
+    keyDigitEl.textContent = (c ? KEY[pos] : "");
+    rotValue.textContent = (c ? r : "");
+
+    // Enable/disable controls
+    const done = pos >= CIPHER.length;
+    dial.disabled = done || isDigit(c); // dial not needed for digits
+    rotatePlus.disabled = done || isDigit(c);
+    rotateMinus.disabled = done || isDigit(c);
+    addBtn.disabled = done;
+    backBtn.disabled = answer.length === 0;
+
+    // Set rotate button labels so Nick sees the step size
+    rotatePlus.textContent = `Rotate +${kDigit}`;
+    rotateMinus.textContent = `Rotate −${kDigit}`;
+
+    // Preview decoded character based on current dial rotation
+    let p = "";
+    if (done) {
+      p = "";
+    } else if (isDigit(c)) {
+      p = c; // digits don’t change
+    } else if (isUpperAlpha(c)) {
+      p = shiftForward(c, r);
+    } else {
+      p = c; // any other chars unchanged
+    }
+    preview.textContent = p ? `"${p}"` : "";
+
+    renderAlphaMap(r, c);
+
+    answerBox.textContent = answer.join("");
+  }
+
+  function rotateByKey(dir) {
+    const c = CIPHER[pos];
+    if (!c || isDigit(c)) return;
+
+    const step = Number(KEY[pos] ?? "0");
+    const current = Number(dial.value);
+    // Keep within 0..25 (wrap)
+    const next = (current + dir * step + 26 * 10) % 26;
+    dial.value = String(next);
+    updateUI();
+  }
+
+  function addCurrentChar() {
+    if (pos >= CIPHER.length) return;
+
+    const c = CIPHER[pos];
+    if (isDigit(c)) {
+      answer.push(c);
+      pos++;
+      dial.value = "0";
+      updateUI();
+      return;
     }
 
-    const cipherTextEl = document.getElementById("cipherText");
-    const keyEl = document.getElementById("key");
-    const plainTextEl = document.getElementById("plainText");
-    const decodeBtn = document.getElementById("decodeBtn");
-    const resetBtn = document.getElementById("resetBtn");
+    const r = Number(dial.value);
+    let decoded = c;
+    if (isUpperAlpha(c)) decoded = shiftForward(c, r);
 
-    function runDecode() {
-      try {
-        const result = decode(cipherTextEl.value.trim(), keyEl.value.trim());
-        plainTextEl.value = result;
-      } catch (e) {
-        plainTextEl.value = "Error: " + e.message;
-      }
-    }
+    answer.push(decoded);
+    pos++;
+    dial.value = "0"; // reset dial for next character
+    updateUI();
+  }
 
-    decodeBtn.addEventListener("click", runDecode);
-    resetBtn.addEventListener("click", () => {
-      cipherTextEl.value = "B1AR5DY26W5U6UGJ";
-      keyEl.value = "3025068001070983";
-      plainTextEl.value = "";
-      cipherTextEl.focus();
-    });
+  function goBack() {
+    if (answer.length === 0) return;
+    answer.pop();
+    pos = Math.max(0, pos - 1);
+    dial.value = "0";
+    updateUI();
+  }
 
-    // Auto-decode once on load (so you can confirm it works), then comment this out if you want.
-    runDecode();
-  </script>
+  function startOver() {
+    pos = 0;
+    answer = [];
+    dial.value = "0";
+    updateUI();
+  }
+
+  dial.addEventListener("input", updateUI);
+  rotatePlus.addEventListener("click", () => rotateByKey(+1));
+  rotateMinus.addEventListener("click", () => rotateByKey(-1));
+  addBtn.addEventListener("click", addCurrentChar);
+  backBtn.addEventListener("click", goBack);
+  startOverBtn.addEventListener("click", startOver);
+
+  // Init
+  updateUI();
+})();
+</script>
 </body>
 </html>
