@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Nick’s Code Dial</title>
 
-  <!-- iPad “add to home screen” / full-screen web app hints -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0b0b0b">
@@ -13,13 +12,19 @@
   <style>
     :root { color-scheme: light dark; }
     html, body { height: 100%; }
-    body { margin: 0; background: Canvas; color: CanvasText; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body {
+      margin: 0;
+      background: Canvas;
+      color: CanvasText;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
 
     .wrap {
       min-height: 100%;
       display: grid;
       place-items: center;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     .card {
@@ -27,19 +32,23 @@
       padding: 18px;
       border: 1px solid rgba(127,127,127,.35);
       border-radius: 16px;
-      box-sizing: border-box;
       margin: 12px;
+      box-sizing: border-box;
     }
 
     h1 { margin: 0 0 10px; font-size: 22px; }
-    .desc { margin: 0 0 14px; font-size: 15px; opacity: .92; line-height: 1.35; }
+    .desc { margin: 0 0 14px; font-size: 15px; opacity: .92; }
 
     .label { font-weight: 900; margin: 14px 0 8px; }
 
-    .cipherline { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cipherline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
 
     .ch {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
       font-size: 22px;
       padding: 6px 8px;
       border-radius: 10px;
@@ -47,61 +56,70 @@
       background: rgba(127,127,127,.06);
       user-select: none;
     }
+
     .ch.active {
       border-color: rgba(80,140,255,.9);
       box-shadow: 0 0 0 2px rgba(80,140,255,.25);
       background: rgba(80,140,255,.10);
     }
+
     .ch.good {
       border-color: rgba(60,200,120,.9);
       box-shadow: 0 0 0 2px rgba(60,200,120,.20);
       background: rgba(60,200,120,.10);
     }
 
-    .panel { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; margin-top: 16px; }
-    @media (max-width: 860px) { .panel { grid-template-columns: 1fr; } }
-
     .box {
+      margin-top: 16px;
       padding: 16px;
       border: 1px solid rgba(127,127,127,.35);
       border-radius: 16px;
       background: rgba(127,127,127,.04);
     }
 
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-
     .topStats {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
       font-weight: 950;
+      margin-bottom: 10px;
     }
 
     .pill {
-      display: inline-block;
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid rgba(127,127,127,.35);
       background: rgba(127,127,127,.08);
-      font-weight: 950;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .map {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
       font-size: 16px;
+      white-space: pre;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(127,127,127,.25);
+      background: rgba(127,127,127,.06);
+      overflow-x: auto;
+      margin-bottom: 12px;
     }
 
     input[type="range"] { width: 100%; }
 
-    .selectedRow {
+    .preview {
       margin-top: 10px;
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
       font-size: 18px;
       font-weight: 950;
     }
-    .selectedRow .big { font-size: 22px; }
+
+    .preview span {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 22px;
+    }
 
     .btnRow {
       display: grid;
@@ -111,19 +129,20 @@
     }
 
     button {
-      cursor: pointer;
       padding: 12px;
       border-radius: 12px;
       border: 1px solid rgba(127,127,127,.45);
       background: transparent;
       font-weight: 950;
       font-size: 16px;
+      cursor: pointer;
     }
+
     button:disabled { opacity: .45; cursor: not-allowed; }
 
     .answer {
       margin-top: 14px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
       font-size: 28px;
       padding: 12px 14px;
       border-radius: 14px;
@@ -142,25 +161,10 @@
       font-size: 14px;
       min-height: 20px;
     }
+
     .msg.ok { border-color: rgba(60,200,120,.6); background: rgba(60,200,120,.10); }
     .msg.bad { border-color: rgba(255,90,90,.6); background: rgba(255,90,90,.10); }
 
-    /* Alphabet slider/mapping */
-    .map {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 16px;
-      line-height: 1.55;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(127,127,127,.25);
-      background: rgba(127,127,127,.06);
-      white-space: pre;
-      overflow-x: auto;
-    }
-    .mapTitle { font-weight: 950; margin-bottom: 8px; opacity: .9; }
-    .map .hintLine { opacity: .85; font-size: 13px; }
-
-    /* Confetti */
     #confetti {
       position: fixed;
       inset: 0;
@@ -177,9 +181,8 @@
   <div class="card">
     <h1>Decode the Nintendo Store Code 🎮</h1>
     <p class="desc">
-      Work left to right. For each letter, use the highlighted key digit as the <b>rotation number</b>.
-      Slide the dial until the alphabet mapping looks right, then press <b>Add</b>.
-      Numbers don’t change—just press <b>Add</b>.
+      Work left to right. Use the highlighted key digit as the rotation number.
+      Slide the dial until the alphabet lines up, then press <b>Add</b>.
     </p>
 
     <div class="label">Encrypted text</div>
@@ -188,36 +191,31 @@
     <div class="label">Rotation key</div>
     <div class="cipherline" id="keyLine"></div>
 
-    <div class="panel">
-      <!-- Left: sliding alphabet visualization -->
-      <!-- <div class="box"> -->
-        <div class="mapTitle">Alphabet slider</div>
-        <div class="map" id="alphaMap"></div>
-      
-        <div class="topStats">
-          <span class="pill mono">Step <span id="stepNow">1</span>/<span id="stepTotal">16</span></span>
-          <span class="pill mono">Cipher: <span id="cipherNow">?</span></span>
-          <span class="pill mono">Key digit: <span id="keyNow">?</span></span>
-          <span class="pill mono">Rotation: <span id="rotNow">0</span></span>
-        </div>
+    <div class="box">
+      <div class="topStats">
+        <span class="pill">Step <span id="stepNow">1</span>/<span id="stepTotal">16</span></span>
+        <span class="pill">Cipher: <span id="cipherNow">?</span></span>
+        <span class="pill">Key: <span id="keyNow">?</span></span>
+        <span class="pill">Rotation: <span id="rotNow">0</span></span>
+      </div>
 
-        <!-- Dial is the ROTATION amount 0..25 -->
-        <input id="dial" type="range" min="0" max="25" step="1" value="0" />
+      <div class="map" id="alphaMap"></div>
 
-        <div class="selectedRow">
-          <div>Preview:</div>
-          <div class="mono big"><span id="previewChar">?</span></div>
-        </div>
+      <input id="dial" type="range" min="0" max="25" step="1" value="0" />
 
-        <div class="btnRow">
-          <button id="addBtn">Add</button>
-          <button id="backBtn">Back</button>
-          <button id="startOverBtn">Start over</button>
-        </div>
+      <div class="preview">
+        <div>Preview</div>
+        <span id="previewChar">?</span>
+      </div>
 
-        <div class="answer" id="answerBox"></div>
-        <div class="msg" id="msgBox"></div>
-      <!-- </div> -->
+      <div class="btnRow">
+        <button id="addBtn">Add</button>
+        <button id="backBtn">Back</button>
+        <button id="startOverBtn">Start over</button>
+      </div>
+
+      <div class="answer" id="answerBox"></div>
+      <div class="msg" id="msgBox"></div>
     </div>
   </div>
 </div>
@@ -227,33 +225,26 @@
   const CIPHER = "B1AR5DY26W5U6UGJ";
   const KEY    = "3025068001070983";
   const TARGET = "E1CW5JG26X5B6DOM";
-
   const ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const A = "A".charCodeAt(0);
 
   const cipherLine = document.getElementById("cipherLine");
   const keyLine = document.getElementById("keyLine");
-
   const alphaMap = document.getElementById("alphaMap");
-
   const dial = document.getElementById("dial");
   const rotNow = document.getElementById("rotNow");
   const previewChar = document.getElementById("previewChar");
-
   const addBtn = document.getElementById("addBtn");
   const backBtn = document.getElementById("backBtn");
   const startOverBtn = document.getElementById("startOverBtn");
-
   const answerBox = document.getElementById("answerBox");
   const msgBox = document.getElementById("msgBox");
-
   const stepNow = document.getElementById("stepNow");
   const stepTotal = document.getElementById("stepTotal");
   const cipherNow = document.getElementById("cipherNow");
   const keyNow = document.getElementById("keyNow");
 
-  const cipherSpans = [];
-  const keySpans = [];
+  const cipherSpans = [], keySpans = [];
 
   function mkSpan(ch) {
     const s = document.createElement("span");
@@ -262,214 +253,106 @@
     return s;
   }
 
-  for (let i = 0; i < CIPHER.length; i++) {
-    const s = mkSpan(CIPHER[i]);
-    cipherLine.appendChild(s);
-    cipherSpans.push(s);
-  }
-  for (let i = 0; i < KEY.length; i++) {
-    const s = mkSpan(KEY[i]);
-    keyLine.appendChild(s);
-    keySpans.push(s);
-  }
+  [...CIPHER].forEach(c => { const s = mkSpan(c); cipherLine.appendChild(s); cipherSpans.push(s); });
+  [...KEY].forEach(k => { const s = mkSpan(k); keyLine.appendChild(s); keySpans.push(s); });
 
-  let pos = 0;
-  let answer = [];
+  let pos = 0, answer = [];
 
-  function isUpper(ch) {
-    const code = ch.charCodeAt(0);
-    return code >= 65 && code <= 90;
-  }
-  function isDigit(ch) {
-    return ch >= "0" && ch <= "9";
-  }
-  function shiftForward(ch, shift) {
-    return String.fromCharCode(A + ((ch.charCodeAt(0) - A + shift) % 26));
-  }
+  const isUpper = c => c >= "A" && c <= "Z";
+  const isDigit = c => c >= "0" && c <= "9";
+  const shift = (c, n) => String.fromCharCode(A + ((c.charCodeAt(0) - A + n) % 26));
 
-  function setMsg(text, cls) {
-    msgBox.textContent = text || "";
-    msgBox.className = "msg" + (cls ? " " + cls : "");
-  }
-
-  function renderAlphaMap(shift, cipherCh) {
+  function renderMap(rot, c) {
     const base = ALPH;
-    const rotated = base.slice(shift) + base.slice(0, shift);
-
-    // Marker: show where cipher letter is in the base alphabet
-    let marker = "";
-    if (isUpper(cipherCh)) {
-      const idx = cipherCh.charCodeAt(0) - A;
-      marker = " ".repeat(idx) + "▲";
-    }
-
-    alphaMap.textContent =
-      `Normal: ${base}\n` +
-      `Shift : ${rotated}\n` +
-      (marker ? `        ${marker}  (cipher letter position)\n` : "");
+    const moved = base.slice(rot) + base.slice(0, rot);
+    let mark = "";
+    if (isUpper(c)) mark = " ".repeat(c.charCodeAt(0) - A) + "▲";
+    alphaMap.textContent = `Normal: ${base}\nShift : ${moved}\n${mark ? "        " + mark : ""}`;
   }
 
   function updatePreview() {
-    const c = CIPHER[pos] ?? "";
-    if (!c) { previewChar.textContent = ""; return; }
-
-    const rot = Number(dial.value);
-    if (isDigit(c)) previewChar.textContent = c;
-    else if (isUpper(c)) previewChar.textContent = shiftForward(c, rot);
-    else previewChar.textContent = c;
-
-    rotNow.textContent = String(rot);
-    renderAlphaMap(rot, c);
+    const c = CIPHER[pos];
+    if (!c) return;
+    const r = Number(dial.value);
+    rotNow.textContent = r;
+    previewChar.textContent = isDigit(c) ? c : shift(c, r);
+    renderMap(r, c);
   }
 
   function updateUI() {
-    stepTotal.textContent = String(CIPHER.length);
-    stepNow.textContent = String(Math.min(pos + 1, CIPHER.length));
-
-    cipherSpans.forEach((s, i) => {
-      s.classList.toggle("active", i === pos);
-      s.classList.toggle("good", i < answer.length);
-    });
+    stepTotal.textContent = CIPHER.length;
+    stepNow.textContent = Math.min(pos + 1, CIPHER.length);
+    cipherSpans.forEach((s, i) => { s.classList.toggle("active", i === pos); s.classList.toggle("good", i < answer.length); });
     keySpans.forEach((s, i) => s.classList.toggle("active", i === pos));
 
-    const done = pos >= CIPHER.length;
-    const c = CIPHER[pos] ?? "";
-    const k = KEY[pos] ?? "";
+    const c = CIPHER[pos] || "";
+    cipherNow.textContent = c || "✓";
+    keyNow.textContent = KEY[pos] || "✓";
 
-    cipherNow.textContent = done ? "✓" : c;
-    keyNow.textContent = done ? "✓" : k;
-
-    // For digits, dial is disabled (rotation irrelevant)
-    dial.disabled = done || isDigit(c);
-
-    addBtn.disabled = done;
-    backBtn.disabled = answer.length === 0;
+    dial.disabled = !c || isDigit(c);
+    addBtn.disabled = !c;
+    backBtn.disabled = !answer.length;
 
     answerBox.textContent = answer.join("");
     updatePreview();
   }
 
   function addCurrent() {
-    if (pos >= CIPHER.length) return;
-
     const c = CIPHER[pos];
-    const expected = TARGET[pos];
-
-    let picked;
-    if (isDigit(c)) {
-      picked = c;
-    } else if (isUpper(c)) {
-      picked = shiftForward(c, Number(dial.value));
-    } else {
-      picked = c;
-    }
-
-    if (picked !== expected) {
-      setMsg("Not quite — try a different rotation number.", "bad");
+    if (!c) return;
+    const picked = isDigit(c) ? c : shift(c, Number(dial.value));
+    if (picked !== TARGET[pos]) {
+      msgBox.textContent = "Not quite — try another rotation.";
+      msgBox.className = "msg bad";
       return;
     }
-
+    msgBox.textContent = "Correct! ✅";
+    msgBox.className = "msg ok";
     answer.push(picked);
     pos++;
-    dial.value = "0";
-    setMsg("Correct! ✅", "ok");
-
-    if (pos >= CIPHER.length) {
-      setMsg("Unlocked! 🎉", "ok");
-      launchConfetti();
-    }
-
+    dial.value = 0;
+    if (pos === CIPHER.length) { msgBox.textContent = "Unlocked! 🎉"; msgBox.className = "msg ok"; launchConfetti(); }
     updateUI();
   }
 
-  function back() {
-    if (!answer.length) return;
-    answer.pop();
-    pos = Math.max(0, pos - 1);
-    dial.value = "0";
-    setMsg("", "");
-    updateUI();
-  }
+  function back() { if (!answer.length) return; answer.pop(); pos--; dial.value = 0; msgBox.textContent = ""; updateUI(); }
+  function startOver() { pos = 0; answer = []; dial.value = 0; msgBox.textContent = ""; updateUI(); }
 
-  function startOver() {
-    pos = 0;
-    answer = [];
-    dial.value = "0";
-    setMsg("", "");
-    updateUI();
-  }
-
-  dial.addEventListener("input", () => { setMsg("", ""); updatePreview(); });
+  dial.addEventListener("input", updatePreview);
   addBtn.addEventListener("click", addCurrent);
   backBtn.addEventListener("click", back);
   startOverBtn.addEventListener("click", startOver);
 
-  // -------- Confetti --------
+  /* Confetti (unchanged) */
   const canvas = document.getElementById("confetti");
   const ctx = canvas.getContext("2d");
-
-  function resizeCanvas() {
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  function resize() {
+    const d = window.devicePixelRatio || 1;
+    canvas.width = innerWidth * d; canvas.height = innerHeight * d;
+    canvas.style.width = innerWidth + "px"; canvas.style.height = innerHeight + "px";
+    ctx.setTransform(d,0,0,d,0,0);
   }
-  window.addEventListener("resize", resizeCanvas);
-
   function launchConfetti() {
-    resizeCanvas();
-    canvas.style.display = "block";
-
-    const W = window.innerWidth, H = window.innerHeight;
-    const pieces = [];
-    const count = Math.min(240, Math.floor(W / 5));
-
-    for (let i = 0; i < count; i++) {
-      pieces.push({
-        x: Math.random() * W,
-        y: -20 - Math.random() * H * 0.2,
-        vx: (Math.random() - 0.5) * 3,
-        vy: 2 + Math.random() * 5,
-        size: 4 + Math.random() * 7,
-        rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.2,
-        life: 150 + Math.random() * 90
+    resize(); canvas.style.display = "block";
+    const pieces = Array.from({length:220},()=>({
+      x:Math.random()*innerWidth,y:-20-Math.random()*200,
+      vx:(Math.random()-.5)*3,vy:2+Math.random()*5,
+      s:4+Math.random()*6,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.2
+    }));
+    let t=0;
+    (function frame(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      pieces.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.vy+=.02; p.r+=p.vr;
+        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+        ctx.fillStyle=`hsl(${(p.x+t)%360},90%,60%)`;
+        ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
       });
-    }
-
-    let t = 0;
-    function frame() {
-      t++;
-      ctx.clearRect(0, 0, W, H);
-
-      for (const p of pieces) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += p.vr;
-        p.vy += 0.02;
-        p.life -= 1;
-
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.fillStyle = `hsl(${Math.floor((p.x + t) % 360)}, 90%, 60%)`;
-        ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-        ctx.restore();
-      }
-
-      if (t < 170 && pieces.some(p => p.life > 0 && p.y < H + 40)) {
-        requestAnimationFrame(frame);
-      } else {
-        canvas.style.display = "none";
-        ctx.clearRect(0, 0, W, H);
-      }
-    }
-    requestAnimationFrame(frame);
+      if(t++<160) requestAnimationFrame(frame);
+      else canvas.style.display="none";
+    })();
   }
 
-  // Init
   updateUI();
 })();
 </script>
