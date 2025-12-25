@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Nick’s Code Dial</title>
+  <title>Nick’s Caesar Code Dial</title>
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -37,15 +37,11 @@
     }
 
     h1 { margin: 0 0 10px; font-size: 22px; }
-    .desc { margin: 0 0 14px; font-size: 15px; opacity: .92; }
+    .desc { margin: 0 0 14px; font-size: 15px; opacity: .92; line-height: 1.35; }
 
     .label { font-weight: 900; margin: 14px 0 8px; }
 
-    .cipherline {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+    .cipherline { display: flex; flex-wrap: wrap; gap: 6px; }
 
     .ch {
       font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
@@ -77,21 +73,31 @@
       background: rgba(127,127,127,.04);
     }
 
-    .topStats {
-      display: flex;
-      flex-wrap: wrap;
+    .callouts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
-      justify-content: space-between;
-      font-weight: 950;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
+    @media (max-width: 640px) { .callouts { grid-template-columns: 1fr; } }
 
-    .pill {
-      padding: 8px 12px;
-      border-radius: 999px;
+    .bigPill {
+      padding: 12px 14px;
+      border-radius: 16px;
       border: 1px solid rgba(127,127,127,.35);
       background: rgba(127,127,127,.08);
-      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-weight: 1000;
+      font-size: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, monospace; }
+
+    .bigValue {
+      font-size: 28px;
+      letter-spacing: 1px;
     }
 
     .map {
@@ -137,7 +143,6 @@
       font-size: 16px;
       cursor: pointer;
     }
-
     button:disabled { opacity: .45; cursor: not-allowed; }
 
     .answer {
@@ -181,8 +186,10 @@
   <div class="card">
     <h1>Decode the Nintendo Store Code 🎮</h1>
     <p class="desc">
-      Work left to right. Use the highlighted key digit as the rotation number.
-      Slide the dial until the alphabet lines up, then press <b>Add</b>.
+      This is a <b>Caesar cipher</b> (a letter-shifting code). Start at the highlighted character.
+      The highlighted digit in the key is how many letters to shift forward.
+      Use the dial to set the <b>rotation</b>, then press <b>Add</b>.
+      If it’s tricky, grab Dad to help you.
     </p>
 
     <div class="label">Encrypted text</div>
@@ -192,11 +199,15 @@
     <div class="cipherline" id="keyLine"></div>
 
     <div class="box">
-      <div class="topStats">
-        <span class="pill">Step <span id="stepNow">1</span>/<span id="stepTotal">16</span></span>
-        <span class="pill">Cipher: <span id="cipherNow">?</span></span>
-        <span class="pill">Key: <span id="keyNow">?</span></span>
-        <span class="pill">Rotation: <span id="rotNow">0</span></span>
+      <div class="callouts">
+        <div class="bigPill">
+          <div>Key digit</div>
+          <div class="mono bigValue" id="keyDigitBig">0</div>
+        </div>
+        <div class="bigPill">
+          <div>Rotation</div>
+          <div class="mono bigValue"><span id="rotNow">0</span></div>
+        </div>
       </div>
 
       <div class="map" id="alphaMap"></div>
@@ -231,18 +242,17 @@
   const cipherLine = document.getElementById("cipherLine");
   const keyLine = document.getElementById("keyLine");
   const alphaMap = document.getElementById("alphaMap");
+
   const dial = document.getElementById("dial");
   const rotNow = document.getElementById("rotNow");
+  const keyDigitBig = document.getElementById("keyDigitBig");
   const previewChar = document.getElementById("previewChar");
+
   const addBtn = document.getElementById("addBtn");
   const backBtn = document.getElementById("backBtn");
   const startOverBtn = document.getElementById("startOverBtn");
   const answerBox = document.getElementById("answerBox");
   const msgBox = document.getElementById("msgBox");
-  const stepNow = document.getElementById("stepNow");
-  const stepTotal = document.getElementById("stepTotal");
-  const cipherNow = document.getElementById("cipherNow");
-  const keyNow = document.getElementById("keyNow");
 
   const cipherSpans = [], keySpans = [];
 
@@ -267,27 +277,45 @@
     const moved = base.slice(rot) + base.slice(0, rot);
     let mark = "";
     if (isUpper(c)) mark = " ".repeat(c.charCodeAt(0) - A) + "▲";
-    alphaMap.textContent = `Normal: ${base}\nShift : ${moved}\n${mark ? "        " + mark : ""}`;
+    alphaMap.textContent =
+      `Normal: ${base}\n` +
+      `Shift : ${moved}\n` +
+      (mark ? `        ${mark}` : "");
+  }
+
+  function setMsg(text, kind) {
+    msgBox.textContent = text || "";
+    msgBox.className = "msg" + (kind ? " " + kind : "");
   }
 
   function updatePreview() {
     const c = CIPHER[pos];
     if (!c) return;
+
     const r = Number(dial.value);
-    rotNow.textContent = r;
-    previewChar.textContent = isDigit(c) ? c : shift(c, r);
+    rotNow.textContent = String(r);
+
+    if (isDigit(c)) {
+      previewChar.textContent = c;
+    } else if (isUpper(c)) {
+      previewChar.textContent = shift(c, r);
+    } else {
+      previewChar.textContent = c;
+    }
+
     renderMap(r, c);
   }
 
   function updateUI() {
-    stepTotal.textContent = CIPHER.length;
-    stepNow.textContent = Math.min(pos + 1, CIPHER.length);
-    cipherSpans.forEach((s, i) => { s.classList.toggle("active", i === pos); s.classList.toggle("good", i < answer.length); });
+    cipherSpans.forEach((s, i) => {
+      s.classList.toggle("active", i === pos);
+      s.classList.toggle("good", i < answer.length);
+    });
     keySpans.forEach((s, i) => s.classList.toggle("active", i === pos));
 
     const c = CIPHER[pos] || "";
-    cipherNow.textContent = c || "✓";
-    keyNow.textContent = KEY[pos] || "✓";
+    const k = KEY[pos] || "0";
+    keyDigitBig.textContent = c ? k : "✓";
 
     dial.disabled = !c || isDigit(c);
     addBtn.disabled = !c;
@@ -300,56 +328,94 @@
   function addCurrent() {
     const c = CIPHER[pos];
     if (!c) return;
-    const picked = isDigit(c) ? c : shift(c, Number(dial.value));
+
+    let picked;
+    if (isDigit(c)) picked = c;
+    else if (isUpper(c)) picked = shift(c, Number(dial.value));
+    else picked = c;
+
     if (picked !== TARGET[pos]) {
-      msgBox.textContent = "Not quite — try another rotation.";
-      msgBox.className = "msg bad";
+      setMsg("Not quite — try another rotation number.", "bad");
       return;
     }
-    msgBox.textContent = "Correct! ✅";
-    msgBox.className = "msg ok";
+
     answer.push(picked);
     pos++;
     dial.value = 0;
-    if (pos === CIPHER.length) { msgBox.textContent = "Unlocked! 🎉"; msgBox.className = "msg ok"; launchConfetti(); }
+    setMsg("Correct! ✅", "ok");
+
+    if (pos === CIPHER.length) {
+      setMsg("Unlocked! 🎉", "ok");
+      launchConfetti();
+    }
+
     updateUI();
   }
 
-  function back() { if (!answer.length) return; answer.pop(); pos--; dial.value = 0; msgBox.textContent = ""; updateUI(); }
-  function startOver() { pos = 0; answer = []; dial.value = 0; msgBox.textContent = ""; updateUI(); }
+  function back() {
+    if (!answer.length) return;
+    answer.pop();
+    pos = Math.max(0, pos - 1);
+    dial.value = 0;
+    setMsg("", "");
+    updateUI();
+  }
 
-  dial.addEventListener("input", updatePreview);
+  function startOver() {
+    pos = 0;
+    answer = [];
+    dial.value = 0;
+    setMsg("", "");
+    updateUI();
+  }
+
+  dial.addEventListener("input", () => { setMsg("", ""); updatePreview(); });
   addBtn.addEventListener("click", addCurrent);
   backBtn.addEventListener("click", back);
   startOverBtn.addEventListener("click", startOver);
 
-  /* Confetti (unchanged) */
+  // ---- Confetti ----
   const canvas = document.getElementById("confetti");
   const ctx = canvas.getContext("2d");
+
   function resize() {
     const d = window.devicePixelRatio || 1;
-    canvas.width = innerWidth * d; canvas.height = innerHeight * d;
-    canvas.style.width = innerWidth + "px"; canvas.style.height = innerHeight + "px";
-    ctx.setTransform(d,0,0,d,0,0);
+    canvas.width = innerWidth * d;
+    canvas.height = innerHeight * d;
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
+    ctx.setTransform(d, 0, 0, d, 0, 0);
   }
+  window.addEventListener("resize", resize);
+
   function launchConfetti() {
-    resize(); canvas.style.display = "block";
-    const pieces = Array.from({length:220},()=>({
-      x:Math.random()*innerWidth,y:-20-Math.random()*200,
-      vx:(Math.random()-.5)*3,vy:2+Math.random()*5,
-      s:4+Math.random()*6,r:Math.random()*Math.PI,vr:(Math.random()-.5)*.2
+    resize();
+    canvas.style.display = "block";
+
+    const pieces = Array.from({ length: 220 }, () => ({
+      x: Math.random() * innerWidth,
+      y: -20 - Math.random() * 220,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 5,
+      s: 4 + Math.random() * 6,
+      r: Math.random() * Math.PI,
+      vr: (Math.random() - 0.5) * 0.2
     }));
-    let t=0;
-    (function frame(){
-      ctx.clearRect(0,0,innerWidth,innerHeight);
-      pieces.forEach(p=>{
-        p.x+=p.vx; p.y+=p.vy; p.vy+=.02; p.r+=p.vr;
-        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
-        ctx.fillStyle=`hsl(${(p.x+t)%360},90%,60%)`;
-        ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); ctx.restore();
-      });
-      if(t++<160) requestAnimationFrame(frame);
-      else canvas.style.display="none";
+
+    let t = 0;
+    (function frame() {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      for (const p of pieces) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.r += p.vr;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.r);
+        ctx.fillStyle = `hsl(${(p.x + t) % 360}, 90%, 60%)`;
+        ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s);
+        ctx.restore();
+      }
+      if (t++ < 160) requestAnimationFrame(frame);
+      else canvas.style.display = "none";
     })();
   }
 
